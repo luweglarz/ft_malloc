@@ -1,34 +1,42 @@
+HOSTTYPE ?= $(shell uname -m)_$(shell uname -s)
+
 CC = gcc
 
-LIB = libmalloc.o
-
-FLAGS = -Wall -Wextra -Werror -Qunused-arguments
+FLAGS = -Wall -Wextra -Werror
 
 SRCS =  $(shell find ./srcs -type f -name '*.c')
 
+OBJS = $(SRCS:.c=.o)
+
 INCLUDES = ./includes
 
-OBJS = $(SRCS:.c=.o)
+LIB_NAME = libft_malloc.so
+
+FULL_LIB_NAME := libft_malloc_$(HOSTTYPE).so
+
+DOCKER_IMAGE = ft_malloc_image
 
 PWD = $(shell pwd)
 
-.c.o:
-	$(CC) $(FLAGS) -I$(INCLUDES) -c $< -o $@
+%.o : %.c
+	$(CC) $(FLAGS) -fPIC -I$(INCLUDES) -c $< -o $@
 
-all: $(LIB)
+all: $(FULL_LIB_NAME)
 
-$(LIB): $(OBJS)
-	$(CC) -fPIC -shared -o $(LIB) $(OBJS)
+$(FULL_LIB_NAME): $(OBJS)
+	$(CC) -shared -o $(FULL_LIB_NAME) $(OBJS)
+	ln -s $(FULL_LIB_NAME) $(LIB_NAME)
 
 docker:
-	@docker build -t ft_malloc_image .
-	@docker run  --name ft_ls_container -it --rm -v $(PWD):/ft_malloc ft_malloc_image /bin/bash
+	@docker build -t $(DOCKER_IMAGE) .
+	@docker run --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --name ft_ls_container -it --rm -v $(PWD):/ft_malloc $(DOCKER_IMAGE) /bin/bash
 
 clean:
 	rm -rf $(OBJS)
-	rm -rf $(LIB)
+	rm -rf $(LIB_NAME)
+	rm -rf $(FULL_LIB_NAME)
 	
 fclean:	clean
-	-docker image rm ft_malloc_image
+	-docker image rm $(DOCKER_IMAGE)
 
 re: fclean all
