@@ -24,7 +24,8 @@ PWD = $(shell pwd)
 all: $(FULL_LIB_NAME)
 
 $(FULL_LIB_NAME): $(OBJS)
-	$(CC) -shared -o $(FULL_LIB_NAME) $(OBJS)
+	make -C libft/ all
+	$(CC) -shared -o $(FULL_LIB_NAME) libft/libft.a  $(OBJS)
 	ln -s $(FULL_LIB_NAME) $(LIB_NAME)
 
 docker:
@@ -33,6 +34,7 @@ docker:
 
 clean:
 	rm -rf $(OBJS)
+	make -C libft/ fclean
 	rm -rf $(LIB_NAME)
 	rm -rf $(FULL_LIB_NAME)
 	
